@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
+import 'main_screen.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -12,58 +12,211 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final AuthService _auth = AuthService();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _loading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _signInEmail() async {
+    setState(() => _loading = true);
+    try {
+      final user = await _auth.signInWithEmail(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+      if (user != null && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login failed: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   void _signInGoogle() async {
     setState(() => _loading = true);
     try {
-      await _auth.signInWithGoogle();
+      final user = await _auth.signInWithGoogle();
+      if (user != null && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google sign-in failed: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google sign-in failed: $e')));
+      }
     } finally {
-      setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
-  void _signInFacebook() async {
-    setState(() => _loading = true);
-    try {
-      await _auth.signInWithFacebook();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Facebook sign-in failed: $e')));
-    } finally {
-      setState(() => _loading = false);
-    }
-  }
+  // void _signInFacebook() async {
+  //   setState(() => _loading = true);
+  //   try {
+  //     final user = await _auth.signInWithFacebook();
+  //     if (user != null && mounted) {
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (_) => const MainScreen()),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Facebook sign-in failed: $e')));
+  //     }
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() => _loading = false);
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign in')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ElevatedButton.icon(
-                onPressed: _loading ? null : _signInGoogle,
-                icon: const Icon(Icons.account_circle),
-                label: const Text('Sign in with Google'),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: _loading ? null : _signInFacebook,
-                icon: const Icon(Icons.facebook),
-                label: const Text('Sign in with Facebook'),
-              ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterPage())),
-                child: const Text('Register with email'),
-              ),
-              if (_loading) const Padding(padding: EdgeInsets.only(top: 16.0), child: CircularProgressIndicator()),
-            ],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 20),
+                // Logo
+                Image.asset(
+                  isDark ? 'assets/images/logo-light.png' : 'assets/images/logo-dark.png',
+                  height: 80,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Welcome Back',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Sign in to continue',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 40),
+
+                // Email
+                TextField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Password
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Sign In Button
+                SizedBox(
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _loading ? null : _signInEmail,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: _loading
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('Sign in', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+                Row(children: [
+                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                  Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('OR', style: TextStyle(color: Colors.grey.shade500, fontSize: 12))),
+                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                ]),
+                const SizedBox(height: 32),
+
+                // Social Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _loading ? null : _signInGoogle,
+                        icon: const Icon(Icons.account_circle, size: 20),
+                        label: const Text('Google'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          foregroundColor: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // Expanded(
+                    //   child: OutlinedButton.icon(
+                    //     onPressed: _loading ? null : _signInFacebook,
+                    //     icon: const Icon(Icons.facebook, size: 20),
+                    //     label: const Text('Facebook'),
+                    //     style: OutlinedButton.styleFrom(
+                    //       padding: const EdgeInsets.symmetric(vertical: 12),
+                    //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    //       foregroundColor: isDark ? Colors.white : Colors.black,
+                    //     ),
+                    //   ),
+                    // ),
+                  ],
+                ),
+
+                const SizedBox(height: 40),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Don't have an account? ", style: TextStyle(color: Colors.grey.shade600)),
+                    GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterPage())),
+                      child: const Text('Register', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

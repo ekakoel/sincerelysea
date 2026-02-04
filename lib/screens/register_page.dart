@@ -20,9 +20,13 @@ class _RegisterPageState extends State<RegisterPage> {
       await _auth.signUpWithEmail(_email.text.trim(), _password.text);
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Register failed: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Register failed: $e')));
+      }
     } finally {
-      setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 

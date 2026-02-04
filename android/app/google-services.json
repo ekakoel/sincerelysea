@@ -48,10 +48,10 @@
               "client_type": 3
             },
             {
-              "client_id": "215566920705-6pmqoues35aallcrl1ulauhga9maqjmk.apps.googleusercontent.com",
+              "client_id": "215566920705-2m7o7q52tv4ulh0oqfnamgm6752oru8q.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.sincerelysea"
+                "bundle_id": "com.example.sincerelysea"
               }
             }
           ]
