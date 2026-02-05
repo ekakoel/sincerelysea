@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/onboarding_service.dart';
-import '../login_page.dart';
+import '../auth_wrapper.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -33,7 +33,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const LoginPage()),
+      MaterialPageRoute(builder: (_) => const AuthWrapper()),
     );
   }
 

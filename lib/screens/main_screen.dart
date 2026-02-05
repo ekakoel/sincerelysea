@@ -13,14 +13,18 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _index = 0;
 
-  final pages = const [
-    FeedScreen(),
-    PostScreen(),
-    ProfileScreen(),
-  ];
+  void _goToFeed() {
+    setState(() => _index = 0);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final pages = [
+      const FeedScreen(),
+      PostScreen(onPostSuccess: _goToFeed), // Pass callback ke PostScreen
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       body: pages[_index],
       bottomNavigationBar: BottomNavigationBar(

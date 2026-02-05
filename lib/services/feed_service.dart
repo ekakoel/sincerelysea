@@ -9,12 +9,22 @@ class FeedService {
   Stream<List<FeedModel>> getFeeds() {
     return _db
         .collection('feeds')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
+        .snapshots(includeMetadataChanges: true) // Agar update lokal langsung muncul
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => FeedModel.fromFirestore(doc.data(), doc.id))
+      final feeds = snapshot.docs
+          .map((doc) {
+            try {
+              return FeedModel.fromFirestore(doc.data(), doc.id);
+            } catch (e) {
+              return null; // Skip dokumen yang rusak/error
+            }
+          })
+          .where((e) => e != null) // Filter null
+          .cast<FeedModel>()
           .toList();
+      // Sort DESCENDING (Terbaru di atas): b.createdAt.compareTo(a.createdAt)
+      feeds.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return feeds;
     });
   }
 

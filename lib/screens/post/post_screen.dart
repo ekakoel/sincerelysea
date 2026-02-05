@@ -5,7 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/post_service.dart';
 
 class PostScreen extends StatefulWidget {
-  const PostScreen({super.key});
+  final VoidCallback? onPostSuccess;
+  const PostScreen({super.key, this.onPostSuccess});
 
   @override
   State<PostScreen> createState() => _PostScreenState();
@@ -62,8 +63,9 @@ class _PostScreenState extends State<PostScreen> {
           _imageFile = null;
           _captionController.clear();
         });
-        // Optional: Switch back to Feed tab via MainScreen controller if accessible,
-        // or just let user stay here.
+        
+        // Pindah ke tab Feed secara otomatis
+        widget.onPostSuccess?.call();
       }
     } catch (e) {
       if (mounted) {

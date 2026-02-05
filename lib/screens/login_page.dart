@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'main_screen.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -26,16 +25,11 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _signInEmail() async {
     setState(() => _loading = true);
     try {
+      // ignore: unused_local_variable
       final user = await _auth.signInWithEmail(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
-      if (user != null && mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainScreen()),
-        );
-      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login failed: $e')));
@@ -48,13 +42,7 @@ class _LoginPageState extends State<LoginPage> {
   void _signInGoogle() async {
     setState(() => _loading = true);
     try {
-      final user = await _auth.signInWithGoogle();
-      if (user != null && mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainScreen()),
-        );
-      }
+      await _auth.signInWithGoogle();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google sign-in failed: $e')));
@@ -65,27 +53,6 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
   }
-
-  // void _signInFacebook() async {
-  //   setState(() => _loading = true);
-  //   try {
-  //     final user = await _auth.signInWithFacebook();
-  //     if (user != null && mounted) {
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => const MainScreen()),
-  //       );
-  //     }
-  //   } catch (e) {
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Facebook sign-in failed: $e')));
-  //     }
-  //   } finally {
-  //     if (mounted) {
-  //       setState(() => _loading = false);
-  //     }
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -189,18 +156,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    // Expanded(
-                    //   child: OutlinedButton.icon(
-                    //     onPressed: _loading ? null : _signInFacebook,
-                    //     icon: const Icon(Icons.facebook, size: 20),
-                    //     label: const Text('Facebook'),
-                    //     style: OutlinedButton.styleFrom(
-                    //       padding: const EdgeInsets.symmetric(vertical: 12),
-                    //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    //       foregroundColor: isDark ? Colors.white : Colors.black,
-                    //     ),
-                    //   ),
-                    // ),
                   ],
                 ),
 

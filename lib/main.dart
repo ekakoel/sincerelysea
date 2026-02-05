@@ -35,7 +35,7 @@ class SincerelyseaApp extends StatelessWidget {
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.black,
+          backgroundColor: Color.fromARGB(255, 255, 255, 255),
           foregroundColor: Colors.white,
           elevation: 0,
         ),

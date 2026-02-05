@@ -23,7 +23,7 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   Future<void> _handleRefresh() async {
-    await Future.delayed(const Duration(seconds: 1));
+    // await Future.delayed(const Duration(seconds: 1));
     setState(() {
       _feedStream = _feedService.getFeeds();
     });
@@ -33,14 +33,34 @@ class _FeedScreenState extends State<FeedScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sincerelysea'),
+        title: Image.asset('assets/images/logo-sincerelysea.png', height: 40),
         centerTitle: true,
       ),
       body: StreamBuilder<List<FeedModel>>(
         stream: _feedStream,
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return RefreshIndicator(
+              onRefresh: _handleRefresh,
+              child: LayoutBuilder(builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints:
+                        BoxConstraints(minHeight: constraints.maxHeight),
+                    child: const Center(child: Text('No feeds yet.')),
+                  ),
+                );
+              }),
+            );
           }
 
           final feeds = snapshot.data!;
