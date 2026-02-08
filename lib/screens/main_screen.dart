@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'feed/feed_screen.dart';
 import 'post/post_screen.dart';
 import 'profile/profile_screen.dart';
+import '../../services/search_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -21,6 +22,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final pages = [
       const FeedScreen(),
+      SearchScreen(),
       PostScreen(onPostSuccess: _goToFeed), // Pass callback ke PostScreen
       const ProfileScreen(),
     ];
@@ -37,6 +39,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.grid_view),
             label: 'Feed',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Search',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.add_box_outlined),

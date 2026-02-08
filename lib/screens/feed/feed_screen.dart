@@ -15,6 +15,7 @@ class FeedScreen extends StatefulWidget {
 class _FeedScreenState extends State<FeedScreen> {
   final FeedService _feedService = FeedService();
   late Stream<List<FeedModel>> _feedStream;
+  bool _isGridView = true;
 
   @override
   void initState() {
@@ -23,7 +24,6 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   Future<void> _handleRefresh() async {
-    // await Future.delayed(const Duration(seconds: 1));
     setState(() {
       _feedStream = _feedService.getFeeds();
     });
@@ -35,6 +35,16 @@ class _FeedScreenState extends State<FeedScreen> {
       appBar: AppBar(
         title: Image.asset('assets/images/logo-sincerelysea.png', height: 40),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
+            onPressed: () {
+              setState(() {
+                _isGridView = !_isGridView;
+              });
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<List<FeedModel>>(
         stream: _feedStream,
@@ -67,17 +77,28 @@ class _FeedScreenState extends State<FeedScreen> {
 
           return RefreshIndicator(
             onRefresh: _handleRefresh,
-            child: MasonryGridView.count(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(12),
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              itemCount: feeds.length,
-              itemBuilder: (context, index) {
-                return FeedCard(feed: feeds[index]);
-              },
-            ),
+            child: _isGridView
+                ? MasonryGridView.count(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(12),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    itemCount: feeds.length,
+                    itemBuilder: (context, index) {
+                      return FeedCard(feed: feeds[index]);
+                    },
+                  )
+                : ListView.builder(
+                    itemCount: feeds.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        child: FeedCard(feed: feeds[index]),
+                      );
+                    },
+                  ),
           );
         },
       ),

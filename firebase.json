@@ -1,1 +1,31 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"sincerelysea-bk10gx","appId":"1:215566920705:android:faa14449369316b686a400","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"sincerelysea-bk10gx","configurations":{"android":"1:215566920705:android:faa14449369316b686a400","ios":"1:215566920705:ios:29f0bced19c970ec86a400","macos":"1:215566920705:ios:29f0bced19c970ec86a400","web":"1:215566920705:web:f2787b8fb40c6f6686a400","windows":"1:215566920705:web:e2c8fea72e9da1f286a400"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "sincerelysea-bk10gx",
+          "appId": "1:215566920705:android:faa14449369316b686a400",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "sincerelysea-bk10gx",
+          "configurations": {
+            "android": "1:215566920705:android:faa14449369316b686a400",
+            "ios": "1:215566920705:ios:29f0bced19c970ec86a400",
+            "macos": "1:215566920705:ios:29f0bced19c970ec86a400",
+            "web": "1:215566920705:web:f2787b8fb40c6f6686a400",
+            "windows": "1:215566920705:web:e2c8fea72e9da1f286a400"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "asia-southeast2",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

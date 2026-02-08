@@ -7,12 +7,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/feed_model.dart';
 import '../services/feed_service.dart';
 import '../screens/feed/comments_screen.dart';
+import 'package:sincerelysea/widgets/expandable_text.dart';
+import 'post_detail_modal.dart';
 
 class FeedCard extends StatelessWidget {
   final FeedModel feed;
 
   const FeedCard({super.key, required this.feed});
-
+  
   String _timeAgo(DateTime dateTime) {
     final diff = DateTime.now().difference(dateTime);
     if (diff.inDays > 365) return '${(diff.inDays / 365).floor()}y ago';
@@ -21,30 +23,6 @@ class FeedCard extends StatelessWidget {
     if (diff.inHours > 0) return '${diff.inHours}h ago';
     if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
     return 'Just now';
-  }
-
-  Future<void> _deletePost(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Post'),
-        content: const Text('Are you sure you want to delete this post?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await FeedService().deleteFeed(feed.id, feed.imageUrl);
-    }
   }
 
   Future<void> _sharePost() async {
@@ -57,6 +35,15 @@ class FeedCard extends StatelessWidget {
       // Fallback: Share just the text and URL if image download fails
       await Share.share('${feed.caption}\n\n${feed.imageUrl}');
     }
+  }
+
+  void _showDetailModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => PostDetailModal(feed: feed),
+    );
   }
 
   @override
@@ -72,24 +59,27 @@ class FeedCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CachedNetworkImage(
-              imageUrl: feed.imageUrl,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Shimmer.fromColors(
-                baseColor: Colors.grey[300]!,
-                highlightColor: Colors.grey[100]!,
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: Container(color: Colors.white),
+            GestureDetector(
+              onTap: () => _showDetailModal(context),
+              child: CachedNetworkImage(
+                imageUrl: feed.imageUrl,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Shimmer.fromColors(
+                  baseColor: Colors.grey[300]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: Container(color: Colors.white),
+                  ),
                 ),
+                errorWidget: (context, url, error) => const Icon(Icons.error),
               ),
-              errorWidget: (context, url, error) => const Icon(Icons.error),
             ),
             Padding(
               padding: const EdgeInsets.all(8),
-              child: Text(
-                feed.caption,
-                style: const TextStyle(fontSize: 14),
+              child: ExpandableText(
+                text: feed.caption,
+                trimLength: 50,
               ),
             ),
             Padding(
@@ -173,13 +163,7 @@ class FeedCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (user != null && user.uid == feed.uid) ...[
-              const Spacer(),
-              GestureDetector(
-                onTap: () => _deletePost(context),
-                child: const Icon(Icons.delete_outline, size: 20, color: Colors.grey),
-              ),
-            ],
+            
             const SizedBox(height: 8),
           ],
         ),

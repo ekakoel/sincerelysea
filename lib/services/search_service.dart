@@ -17,4 +17,47 @@ class SearchService {
 
     return snapshot.docs.map((doc) => doc.data()).toList();
   }
+
+  Future<List<DocumentSnapshot>> searchPostsByHashtag(
+    String hashtag, {
+    int limit = 15,
+    DocumentSnapshot? startAfter,
+  }) async {
+    if (hashtag.isEmpty) return [];
+
+    final queryTag = hashtag.startsWith('#') ? hashtag : '#$hashtag';
+
+    Query query = _firestore
+        .collection('feeds')
+        .where('hashtags', arrayContains: queryTag);
+
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+
+    final snapshot = await query.limit(limit).get();
+
+    return snapshot.docs;
+  }
+
+  Future<List<DocumentSnapshot>> searchPostsByLocation(
+    String locationName, {
+    int limit = 15,
+    DocumentSnapshot? startAfter,
+  }) async {
+    if (locationName.isEmpty) return [];
+
+    Query query = _firestore
+        .collection('feeds')
+        .where('locationName', isGreaterThanOrEqualTo: locationName)
+        .where('locationName', isLessThan: '$locationName\uf8ff');
+
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+
+    final snapshot = await query.limit(limit).get();
+
+    return snapshot.docs;
+  }
 }

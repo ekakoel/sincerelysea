@@ -15,6 +15,6 @@ void main() {
     await tester.pumpWidget(const SincerelyseaApp());
 
     // Verify that our splash screen text is present.
-    expect(find.text('Sincerelysea'), findsOneWidget);
+    expect(find.text('SincerelySea'), findsOneWidget);
   });
 }

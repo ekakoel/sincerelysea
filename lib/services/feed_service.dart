@@ -6,27 +6,41 @@ import '../models/comment_model.dart';
 class FeedService {
   final _db = FirebaseFirestore.instance;
 
+  // Stream<List<FeedModel>> getFeeds() {
+  //   return _db
+  //       .collection('feeds')
+  //       .snapshots(includeMetadataChanges: true) // Agar update lokal langsung muncul
+  //       .map((snapshot) {
+  //     final feeds = snapshot.docs
+  //         .map((doc) {
+  //           try {
+  //             return FeedModel.fromFirestore(doc.data(), doc.id);
+  //           } catch (e) {
+  //             return null; // Skip dokumen yang rusak/error
+  //           }
+  //         })
+  //         .where((e) => e != null) // Filter null
+  //         .cast<FeedModel>()
+  //         .toList();
+  //     // Sort DESCENDING (Terbaru di atas): b.createdAt.compareTo(a.createdAt)
+  //     feeds.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  //     return feeds;
+  //   });
+  // }
   Stream<List<FeedModel>> getFeeds() {
-    return _db
-        .collection('feeds')
-        .snapshots(includeMetadataChanges: true) // Agar update lokal langsung muncul
-        .map((snapshot) {
-      final feeds = snapshot.docs
-          .map((doc) {
-            try {
-              return FeedModel.fromFirestore(doc.data(), doc.id);
-            } catch (e) {
-              return null; // Skip dokumen yang rusak/error
-            }
-          })
-          .where((e) => e != null) // Filter null
-          .cast<FeedModel>()
-          .toList();
-      // Sort DESCENDING (Terbaru di atas): b.createdAt.compareTo(a.createdAt)
-      feeds.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return feeds;
-    });
-  }
+  return _db
+      .collection('feeds')
+      .snapshots() // ⬅️ HAPUS includeMetadataChanges
+      .map((snapshot) {
+        final feeds = snapshot.docs
+            .map((doc) => FeedModel.fromFirestore(doc.data(), doc.id))
+            .toList();
+
+        feeds.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return feeds;
+      });
+}
+
 
   Stream<List<FeedModel>> getSavedFeeds(String uid) {
     return _db
@@ -83,22 +97,54 @@ class FeedService {
         .collection('feeds')
         .doc(feedId)
         .collection('comments')
-        .orderBy('createdAt', descending: true)
+        .orderBy('createdAt', descending: false) // Fetch oldest first to build hierarchy
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
+      final allComments = snapshot.docs
           .map((doc) => CommentModel.fromFirestore(doc.data(), doc.id))
           .toList();
+
+      final Map<String, CommentModel> commentMap = {
+        for (var c in allComments) c.id: c
+      };
+      final List<CommentModel> topLevelComments = [];
+
+      for (var comment in allComments) {
+        if (comment.parentId != null && commentMap.containsKey(comment.parentId)) {
+          // This is a reply, add it to the parent's list
+          commentMap[comment.parentId]!.replies.add(comment);
+        } else {
+          // This is a top-level comment
+          topLevelComments.add(comment);
+        }
+      }
+      
+      // Optional: Sort replies by creation time as well
+      for (var comment in topLevelComments) {
+        comment.replies.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      }
+
+      // Sort top-level comments to show newest first
+      topLevelComments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      return topLevelComments;
     });
   }
 
-  Future<void> addComment(String feedId, String uid, String userName, String text) async {
-    await _db.collection('feeds').doc(feedId).collection('comments').add({
+  Future<void> addComment(String feedId, String uid, String userName, String text, {String? parentId}) async {
+    final commentData = {
       'uid': uid,
       'userName': userName,
       'text': text,
       'createdAt': FieldValue.serverTimestamp(),
-    });
+      'parentId': parentId,
+    };
+    // Remove parentId if it's null, so it doesn't get saved in Firestore
+    if (parentId == null) {
+      commentData.remove('parentId');
+    }
+    
+    await _db.collection('feeds').doc(feedId).collection('comments').add(commentData);
 
     await _db.collection('feeds').doc(feedId).update({
       'commentCount': FieldValue.increment(1),

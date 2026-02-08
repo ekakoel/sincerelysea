@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import 'register_page.dart';
 
@@ -25,11 +26,36 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _signInEmail() async {
     setState(() => _loading = true);
     try {
-      // ignore: unused_local_variable
-      final user = await _auth.signInWithEmail(
+      await _auth.signInWithEmail(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
+
+      // Cek apakah email sudah diverifikasi
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null && !user.emailVerified) {
+        // Jika belum aktif: Kirim verifikasi, Logout, dan Tampilkan Pesan
+        await user.sendEmailVerification();
+        await FirebaseAuth.instance.signOut();
+
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Activation Required'),
+              content: const Text(
+                  'Your account is not active yet. We have sent an activation link to your email. Please click the link to activate your account.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
+        return; // Hentikan proses agar tidak lanjut ke Home
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login failed: $e')));
@@ -51,6 +77,67 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         setState(() => _loading = false);
       }
+    }
+  }
+
+  Future<void> _forgotPassword() async {
+    String? email = _emailController.text.trim();
+
+    // Show dialog to confirm or enter email
+    email = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController(text: email);
+        return AlertDialog(
+          title: const Text('Reset Password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Enter your email address to receive a password reset link.'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.emailAddress,
+                autofocus: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              child: const Text('Send'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (email == null || email.isEmpty) return;
+
+    setState(() => _loading = true);
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Password reset link sent to $email')),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.message}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -111,6 +198,16 @@ class _LoginPageState extends State<LoginPage> {
                     prefixIcon: const Icon(Icons.lock_outline),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _loading ? null : _forgotPassword,
+                    child: Text(
+                      'Forgot Password?',
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),

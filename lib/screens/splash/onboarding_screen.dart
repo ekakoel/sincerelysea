@@ -15,7 +15,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final pages = const [
     {
-      'title': 'Welcome to Sincerelysea',
+      'title': 'Welcome to SincerelySea',
       'subtitle': 'A calm space to connect and grow together.'
     },
     {

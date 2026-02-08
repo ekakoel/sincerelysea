@@ -87,16 +87,6 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 180,
                 ),
                 const SizedBox(height: 80),
-                // const Text(
-                //   'Sincerelysea',
-                //   style: TextStyle(
-                //     color: Colors.white,
-                //     fontSize: 26,
-                //     fontWeight: FontWeight.bold,
-                //     letterSpacing: 0.5,
-                //   ),
-                // ),
-                // const SizedBox(height: 6),
                 const Text(
                   'Welcome',
                   style: TextStyle(

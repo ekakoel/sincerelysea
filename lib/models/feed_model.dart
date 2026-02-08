@@ -10,6 +10,9 @@ class FeedModel {
   final DateTime createdAt;
   final int commentCount;
   final List<String> savedBy;
+  final double? latitude;
+  final double? longitude;
+  final String? locationName;
 
   FeedModel({
     required this.id,
@@ -21,6 +24,9 @@ class FeedModel {
     required this.createdAt,
     required this.commentCount,
     required this.savedBy,
+    this.latitude,
+    this.longitude,
+    this.locationName,
   });
 
   factory FeedModel.fromFirestore(Map<String, dynamic> data, String id) {
@@ -47,6 +53,9 @@ class FeedModel {
       savedBy: (data['savedBy'] is List)
           ? (data['savedBy'] as List).map((e) => e.toString()).toList()
           : [],
+      latitude: data['latitude'],
+      longitude: data['longitude'],
+      locationName: data['locationName'],
     );
   }
 }
