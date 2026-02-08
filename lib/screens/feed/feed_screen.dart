@@ -78,7 +78,17 @@ class _FeedScreenState extends State<FeedScreen> {
           return RefreshIndicator(
             onRefresh: _handleRefresh,
             child: _isGridView
-                ? MasonryGridView.count(
+                ? ListView.builder(
+                    itemCount: feeds.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        child: FeedCard(feed: feeds[index]),
+                      );
+                    },
+                  )
+                : MasonryGridView.count(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(12),
                     crossAxisCount: 2,
@@ -87,16 +97,6 @@ class _FeedScreenState extends State<FeedScreen> {
                     itemCount: feeds.length,
                     itemBuilder: (context, index) {
                       return FeedCard(feed: feeds[index]);
-                    },
-                  )
-                : ListView.builder(
-                    itemCount: feeds.length,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        child: FeedCard(feed: feeds[index]),
-                      );
                     },
                   ),
           );

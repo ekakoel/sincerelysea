@@ -25,40 +25,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late String _targetUid;
 
   @override
+  // void initState() {
+  //   super.initState();
+  //   final currentUser = FirebaseAuth.instance.currentUser;
+  //   _targetUid = widget.userId ?? currentUser?.uid ?? '';
+    
+  //   if (_targetUid == currentUser?.uid) {
+  //     // Reload user data to get the latest emailVerified status
+  //     currentUser?.reload().then((_) {
+  //       if (mounted) setState(() {});
+  //     });
+  //   }
+
+  //   if (_targetUid.isNotEmpty) {
+  //     _followerCountStream = PostService().getFollowerCount(_targetUid);
+  //     _followingCountStream = PostService().getFollowingCount(_targetUid);
+  //     _postsStream = PostService().getUserPosts(_targetUid);
+  //     _savedPostsStream = FirebaseFirestore.instance
+  //         .collection('feeds')
+  //         .where('savedBy', arrayContains: _targetUid)
+  //         .orderBy('createdAt', descending: true)
+  //         .snapshots();
+  //     _wishlistPostsStream = FirebaseFirestore.instance
+  //         .collection('feeds')
+  //         .where('wishlistedBy', arrayContains: _targetUid)
+  //         .orderBy('createdAt', descending: true)
+  //         .snapshots();
+  //   } else {
+  //     // Handle empty UID case safely with empty streams if needed
+  //     _followerCountStream = Stream.value(0);
+  //     _followingCountStream = Stream.value(0);
+  //     _postsStream = const Stream.empty();
+  //     _savedPostsStream = const Stream.empty();
+  //     _wishlistPostsStream = const Stream.empty();
+  //   }
+  // }
+  @override
   void initState() {
     super.initState();
     final currentUser = FirebaseAuth.instance.currentUser;
     _targetUid = widget.userId ?? currentUser?.uid ?? '';
-    
-    if (_targetUid == currentUser?.uid) {
-      // Reload user data to get the latest emailVerified status
-      currentUser?.reload().then((_) {
-        if (mounted) setState(() {});
-      });
-    }
 
-    if (_targetUid.isNotEmpty) {
-      _followerCountStream = PostService().getFollowerCount(_targetUid);
-      _followingCountStream = PostService().getFollowingCount(_targetUid);
-      _postsStream = PostService().getUserPosts(_targetUid);
-      _savedPostsStream = FirebaseFirestore.instance
-          .collection('feeds')
-          .where('savedBy', arrayContains: _targetUid)
-          .orderBy('createdAt', descending: true)
-          .snapshots();
-      _wishlistPostsStream = FirebaseFirestore.instance
-          .collection('feeds')
-          .where('wishlistedBy', arrayContains: _targetUid)
-          .orderBy('createdAt', descending: true)
-          .snapshots();
-    } else {
-      // Handle empty UID case safely with empty streams if needed
-      _followerCountStream = Stream.value(0);
-      _followingCountStream = Stream.value(0);
-      _postsStream = const Stream.empty();
-      _savedPostsStream = const Stream.empty();
-      _wishlistPostsStream = const Stream.empty();
-    }
+    final postService = PostService();
+
+    _followerCountStream = postService.getFollowerCount(_targetUid);
+    _followingCountStream = postService.getFollowingCount(_targetUid);
+    _postsStream = postService.getUserPosts(_targetUid);
+
+    _savedPostsStream = postService.getSavedPosts(_targetUid);
+    _wishlistPostsStream = postService.getWishlistPosts(_targetUid);
   }
 
   @override
@@ -391,63 +406,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+// Widget _buildPostGrid(Stream<QuerySnapshot> stream, {bool isWishlist = false, bool isBookmark = false}) {
+  //   return StreamBuilder<QuerySnapshot>(
+  //     stream: stream,
+  //     builder: (context, postSnapshot) {
+  //       if (postSnapshot.hasError) {
+  //         return Center(child: Text('Error: ${postSnapshot.error}'));
+  //       }
+  //       if (postSnapshot.connectionState == ConnectionState.waiting) {
+  //         return const Center(child: CircularProgressIndicator());
+  //       }
+
+  //       final posts = postSnapshot.data?.docs ?? [];
+
+  //       if (posts.isEmpty) {
+  //         return const Center(child: Text('No posts yet'));
+  //       }
+
+  //       return GridView.builder(
+  //         padding: const EdgeInsets.all(2),
+  //         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //           crossAxisCount: 3,
+  //           crossAxisSpacing: 2,
+  //           mainAxisSpacing: 2,
+  //         ),
+  //         itemCount: posts.length,
+  //         itemBuilder: (context, index) {
+  //           final post = posts[index].data() as Map<String, dynamic>;
+  //           final postId = posts[index].id;
+
+  //           return GestureDetector(
+  //             onTap: () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(
+  //                   builder: (_) => PostDetailScreen(
+  //                     postData: post,
+  //                     postId: postId,
+  //                   ),
+  //                 ),
+  //               );
+  //             },
+  //             onLongPress: (_targetUid == FirebaseAuth.instance.currentUser?.uid && (isWishlist || isBookmark))
+  //                 ? () {
+  //                     if (isWishlist) _confirmRemoveFromWishlist(context, postId, post);
+  //                     if (isBookmark) _confirmRemoveFromBookmark(context, postId, post);
+  //                   }
+  //                 : null,
+  //             child: CachedNetworkImage(
+  //               imageUrl: (post['imageUrl'] as String?) ?? '',
+  //               fit: BoxFit.cover,
+  //               placeholder: (context, url) => Container(color: Colors.grey[300]),
+  //               errorWidget: (context, url, error) => const Icon(Icons.error),
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
+
+  Widget _buildPostGrid(Stream<QuerySnapshot> stream) {
   Widget _buildPostGrid(Stream<QuerySnapshot> stream, {bool isWishlist = false, bool isBookmark = false}) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: stream,
-      builder: (context, postSnapshot) {
-        if (postSnapshot.hasError) {
-          return Center(child: Text('Error: ${postSnapshot.error}'));
-        }
-        if (postSnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+  return StreamBuilder<QuerySnapshot>(
+    stream: stream,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-        final posts = postSnapshot.data?.docs ?? [];
+      final docs = snapshot.data?.docs ?? [];
 
-        if (posts.isEmpty) {
-          return const Center(child: Text('No posts yet'));
-        }
+      if (docs.isEmpty) {
+        return const Center(child: Text('No posts yet'));
+      }
 
-        return GridView.builder(
-          padding: const EdgeInsets.all(2),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 2,
-            mainAxisSpacing: 2,
-          ),
-          itemCount: posts.length,
-          itemBuilder: (context, index) {
-            final post = posts[index].data() as Map<String, dynamic>;
-            final postId = posts[index].id;
+      return GridView.builder(
+        padding: const EdgeInsets.all(2),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 2,
+          mainAxisSpacing: 2,
+        ),
+        itemCount: docs.length,
+        itemBuilder: (context, index) {
+          final data = docs[index].data() as Map<String, dynamic>;
+          final imageUrl = data['imageUrl'];
+          final imageUrl = data['imageUrl'] as String? ?? '';
+          final postId = docs[index].id;
 
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PostDetailScreen(
-                      postData: post,
-                      postId: postId,
-                    ),
+          return GestureDetector(
+            onTap: () async {
+              final postRef = data['postRef'] as DocumentReference;
+              final postSnap = await postRef.get();
+
+              if (!postSnap.exists) return;
+
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PostDetailScreen(
+                    postId: postRef.id,
+                    postData: postSnap.data() as Map<String, dynamic>,
+                    postId: postId,
+                    postData: data,
                   ),
-                );
-              },
-              onLongPress: (_targetUid == FirebaseAuth.instance.currentUser?.uid && (isWishlist || isBookmark))
-                  ? () {
-                      if (isWishlist) _confirmRemoveFromWishlist(context, postId, post);
-                      if (isBookmark) _confirmRemoveFromBookmark(context, postId, post);
-                    }
-                  : null,
-              child: CachedNetworkImage(
-                imageUrl: (post['imageUrl'] as String?) ?? '',
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(color: Colors.grey[300]),
-                errorWidget: (context, url, error) => const Icon(Icons.error),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+                ),
+              );
+            },
+            onLongPress: (_targetUid == FirebaseAuth.instance.currentUser?.uid && (isWishlist || isBookmark))
+                ? () {
+                    if (isWishlist) _confirmRemoveFromWishlist(context, postId, data);
+                    if (isBookmark) _confirmRemoveFromBookmark(context, postId, data);
+                  }
+                : null,
+            child: CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              placeholder: (_, __) => Container(color: Colors.grey[300]),
+              errorWidget: (_, __, ___) => const Icon(Icons.error),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+
 }
