@@ -467,7 +467,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // }
 
   Widget _buildPostGrid(Stream<QuerySnapshot> stream) {
-  Widget _buildPostGrid(Stream<QuerySnapshot> stream, {bool isWishlist = false, bool isBookmark = false}) {
   return StreamBuilder<QuerySnapshot>(
     stream: stream,
     builder: (context, snapshot) {
@@ -492,8 +491,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         itemBuilder: (context, index) {
           final data = docs[index].data() as Map<String, dynamic>;
           final imageUrl = data['imageUrl'];
-          final imageUrl = data['imageUrl'] as String? ?? '';
-          final postId = docs[index].id;
 
           return GestureDetector(
             onTap: () async {
@@ -502,25 +499,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               if (!postSnap.exists) return;
 
-            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => PostDetailScreen(
                     postId: postRef.id,
                     postData: postSnap.data() as Map<String, dynamic>,
-                    postId: postId,
-                    postData: data,
                   ),
                 ),
               );
             },
-            onLongPress: (_targetUid == FirebaseAuth.instance.currentUser?.uid && (isWishlist || isBookmark))
-                ? () {
-                    if (isWishlist) _confirmRemoveFromWishlist(context, postId, data);
-                    if (isBookmark) _confirmRemoveFromBookmark(context, postId, data);
-                  }
-                : null,
             child: CachedNetworkImage(
               imageUrl: imageUrl,
               fit: BoxFit.cover,
