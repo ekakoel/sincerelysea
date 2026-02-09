@@ -368,7 +368,6 @@ class _SearchScreenState extends State<SearchScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => PostDetailScreen(
-                                      postData: post,
                                       postId: postId,
                                     ),
                                   ),
@@ -556,7 +555,6 @@ class _SearchScreenState extends State<SearchScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (_) => PostDetailScreen(
-                      postData: post,
                       postId: postDoc.id,
                     ),
                   ),

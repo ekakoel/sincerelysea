@@ -53,8 +53,10 @@ class PostService {
   Future<void> deletePost(String postId, String imageUrl) async {
     try {
       // 1. Fetch post to get hashtags
-      final DocumentSnapshot postDoc = await _firestore.collection('feeds').doc(postId).get();
-      final List<dynamic> hashtags = (postDoc.data() as Map<String, dynamic>?)?['hashtags'] ?? [];
+      final DocumentSnapshot postDoc =
+          await _firestore.collection('feeds').doc(postId).get();
+      final List<dynamic> hashtags =
+          (postDoc.data() as Map<String, dynamic>?)?['hashtags'] ?? [];
 
       // 2. Delete Image from Storage
       if (imageUrl.isNotEmpty) {
@@ -67,7 +69,8 @@ class PostService {
       for (final tag in hashtags) {
         if (tag is String && tag.startsWith('#') && tag.length > 1) {
           final String tagId = tag.substring(1).toLowerCase();
-          batch.update(_firestore.collection('hashtags').doc(tagId), {'count': FieldValue.increment(-1)});
+          batch.update(_firestore.collection('hashtags').doc(tagId),
+              {'count': FieldValue.increment(-1)});
         }
       }
 
@@ -80,10 +83,12 @@ class PostService {
 
   Future<void> updatePostCaption(String postId, String newCaption) async {
     // 1. Fetch current post to get old hashtags
-    final DocumentSnapshot postDoc = await _firestore.collection('feeds').doc(postId).get();
+    final DocumentSnapshot postDoc =
+        await _firestore.collection('feeds').doc(postId).get();
     if (!postDoc.exists) throw Exception('Post not found');
 
-    final List<dynamic> oldHashtagsList = (postDoc.data() as Map<String, dynamic>?)?['hashtags'] ?? [];
+    final List<dynamic> oldHashtagsList =
+        (postDoc.data() as Map<String, dynamic>?)?['hashtags'] ?? [];
     final Set<String> oldHashtags = oldHashtagsList.cast<String>().toSet();
 
     // 2. Extract new hashtags
@@ -106,12 +111,16 @@ class PostService {
 
     for (final tag in tagsToAdd) {
       final String tagId = tag.substring(1).toLowerCase();
-      batch.set(_firestore.collection('hashtags').doc(tagId), {'tag': tag, 'count': FieldValue.increment(1)}, SetOptions(merge: true));
+      batch.set(
+          _firestore.collection('hashtags').doc(tagId),
+          {'tag': tag, 'count': FieldValue.increment(1)},
+          SetOptions(merge: true));
     }
 
     for (final tag in tagsToRemove) {
       final String tagId = tag.substring(1).toLowerCase();
-      batch.update(_firestore.collection('hashtags').doc(tagId), {'count': FieldValue.increment(-1)});
+      batch.update(_firestore.collection('hashtags').doc(tagId),
+          {'count': FieldValue.increment(-1)});
     }
 
     await batch.commit();
@@ -119,20 +128,25 @@ class PostService {
 
   Future<List<String>> fetchHashtags() async {
     try {
-      final QuerySnapshot snapshot = await _firestore.collection('hashtags').get();
-      return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        return data['tag'] as String? ?? '';
-      }).where((tag) => tag.isNotEmpty).toList();
+      final QuerySnapshot snapshot =
+          await _firestore.collection('hashtags').get();
+      return snapshot.docs
+          .map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return data['tag'] as String? ?? '';
+          })
+          .where((tag) => tag.isNotEmpty)
+          .toList();
     } catch (e) {
       return [];
     }
   }
 
-  Future<void> toggleLike(String postId, String uid, String postOwnerUid, List likes) async {
-    final DocumentReference postRef = _firestore.collection('feeds').doc(postId);
+  Future<void> toggleLike(String postId, String uid, bool isLiked) async {
+    final DocumentReference postRef =
+        _firestore.collection('feeds').doc(postId);
 
-    if (likes.contains(uid)) {
+    if (isLiked) {
       await postRef.update({
         'likes': FieldValue.arrayRemove([uid])
       });
@@ -143,10 +157,11 @@ class PostService {
     }
   }
 
-  Future<void> toggleSave(String postId, String uid, List savedBy) async {
-    final DocumentReference postRef = _firestore.collection('feeds').doc(postId);
+  Future<void> toggleSave(String postId, String uid, bool isSaved) async {
+    final DocumentReference postRef =
+        _firestore.collection('feeds').doc(postId);
 
-    if (savedBy.contains(uid)) {
+    if (isSaved) {
       await postRef.update({
         'savedBy': FieldValue.arrayRemove([uid])
       });
@@ -157,10 +172,12 @@ class PostService {
     }
   }
 
-  Future<void> toggleWishlist(String postId, String uid, List wishlistedBy) async {
-    final DocumentReference postRef = _firestore.collection('feeds').doc(postId);
+  Future<void> toggleWishlist(
+      String postId, String uid, bool isWishlisted) async {
+    final DocumentReference postRef =
+        _firestore.collection('feeds').doc(postId);
 
-    if (wishlistedBy.contains(uid)) {
+    if (isWishlisted) {
       await postRef.update({
         'wishlistedBy': FieldValue.arrayRemove([uid])
       });
@@ -171,8 +188,14 @@ class PostService {
     }
   }
 
-  Future<void> addComment(String postId, String uid, String userName, String text, {String? parentId}) async {
-    await _firestore.collection('feeds').doc(postId).collection('comments').add({
+  Future<void> addComment(
+      String postId, String uid, String userName, String text,
+      {String? parentId}) async {
+    await _firestore
+        .collection('feeds')
+        .doc(postId)
+        .collection('comments')
+        .add({
       'uid': uid,
       'userName': userName,
       'text': text,
@@ -198,7 +221,8 @@ class PostService {
     });
   }
 
-  Future<void> updateComment(String postId, String commentId, String newText) async {
+  Future<void> updateComment(
+      String postId, String commentId, String newText) async {
     await _firestore
         .collection('feeds')
         .doc(postId)
@@ -210,14 +234,15 @@ class PostService {
     });
   }
 
-  Future<void> toggleCommentLike(String postId, String commentId, String uid, List likes) async {
+  Future<void> toggleCommentLike(
+      String postId, String commentId, String uid, bool isLiked) async {
     final DocumentReference commentRef = _firestore
         .collection('feeds')
         .doc(postId)
         .collection('comments')
         .doc(commentId);
 
-    if (likes.contains(uid)) {
+    if (isLiked) {
       await commentRef.update({
         'likes': FieldValue.arrayRemove([uid])
       });
@@ -242,6 +267,20 @@ class PostService {
         .collection('feeds')
         .where('uid', isEqualTo: uid)
         .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
+  Stream<QuerySnapshot> getSavedPosts(String uid) {
+    return _firestore
+        .collection('feeds')
+        .where('savedBy', arrayContains: uid)
+        .snapshots();
+  }
+
+  Stream<QuerySnapshot> getWishlistPosts(String uid) {
+    return _firestore
+        .collection('feeds')
+        .where('wishlistedBy', arrayContains: uid)
         .snapshots();
   }
 
@@ -335,6 +374,7 @@ class PostService {
         .orderBy('createdAt', descending: true)
         .snapshots();
   }
+
   Future<DocumentSnapshot> getPost(String postId) {
     return _firestore.collection('feeds').doc(postId).get();
   }

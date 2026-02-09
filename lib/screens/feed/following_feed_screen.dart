@@ -79,7 +79,6 @@ class FollowingFeedScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (_) => PostDetailScreen(
-                              postData: post,
                               postId: postId,
                             ),
                           ),
